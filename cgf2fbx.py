@@ -112,6 +112,9 @@ def run(argv=None):
     parser.add_option('--copy-textures', dest='copy_textures', default=False,
                       action='store_true', help='Copy the material textures to the output directory')
 
+    parser.add_option('--bake-space-transform', dest='bake_space_transform', default=False,
+                      action='store_true', help='Specify the \'bake space transform\' options.')
+
     (keywords, positional) = parser.parse_args(argv)
 
     # Force the render engine to CYCLES
@@ -215,7 +218,7 @@ def run(argv=None):
         filepath=fbx_filepath,
         axis_forward='Z',
         axis_up='Y',
-        bake_space_transform=True,
+        bake_space_transform=keywords.bake_space_transform,
         object_types=object_types,
         use_mesh_modifiers=True,
         use_mesh_modifiers_render=True,
