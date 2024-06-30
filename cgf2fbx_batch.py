@@ -183,6 +183,8 @@ def run(argv=None):
     if keywords.keep_structure:
         addition_args.append('--keep-structure')
 
+    addition_args.append('--bake-space-transform')
+
     if len(cgf_lists):
         for cgf_path in cgf_lists:
             cgf_path = cgf_path.replace('\n', '').replace('\r', '')

@@ -30,6 +30,9 @@ def process_options(argv=None):
     parser.add_option('-u', '--unity', action='store_true',
                       default=False, help='Specified compatible with unity engine.')
 
+    parser.add_option('-r', '--rotate', action='store', type='string',
+                      default=0, help='Specified the rotation for the output images.')
+
     parser.add_option('-v', '--verbose', action='store_true', default=False,
                       help='Verbose logging trace')
 
@@ -125,11 +128,17 @@ def read_h32(a_file, width, height, for_unity=False):
     return None
 
 
-def do_convert(input_file, width, height, for_unity, output_file):
+def do_convert(input_file, width, height, for_unity, rotate, output_file):
     data, image, x2, y2 = read_h32(input_file, width, height, for_unity)
+
+    r_limit_output_hash = {}
+    rotation = int(rotate)
 
     if image:
         # Split as splat maps.
+        debug_map = Image.new('RGB', (image.width, image.height))
+        max_splat_count = 0
+
         splat_maps = {}
         for x in range(image.width):
             for y in range(image.height):
@@ -138,9 +147,14 @@ def do_convert(input_file, width, height, for_unity, output_file):
                 splat_idx = int(math.floor(r / 4))
 
                 if r >= 32:
+                    if r not in r_limit_output_hash:
+                        r_limit_output_hash[r] = True
+                        print(f'Splat channel greater then 32, found: {r}')
                     continue
 
-                splat_sub_idx = r % 4
+                max_splat_count = max(max_splat_count, r)
+
+                splat_sub_idx = int(math.floor(r % 4))
                 if splat_sub_idx == 1:
                     r = 0
                     g = 255
@@ -165,12 +179,21 @@ def do_convert(input_file, width, height, for_unity, output_file):
                 if not splat_idx in splat_maps:
                     splat_maps[splat_idx] = Image.new('RGBA', (image.width, image.height))
                 splat_maps[splat_idx].putpixel((x, y), (r, g, b, a))
+                debug_map.putpixel((x, y), (255, 255, 255))
+
+        logging.debug(f"Max splat count: {max_splat_count}")
 
         for i, v in splat_maps.items():
-            v = v.rotate(90)
+            if rotation != 0:
+                v = v.rotate(rotation)
             v.save('%s_s%d.png' % (output_file, i))
 
-        image = image.rotate(90)
+            if rotation != 0:
+                debug_map = debug_map.rotate(rotation)
+        debug_map.save('%s_debug.png' % (output_file))
+
+        if rotation != 0:
+            image = image.rotate(rotation)
         image.save(output_file + '.png')
 
     if data:
@@ -204,7 +227,7 @@ def run(argv=None):
     logging.debug('Resolution on working: %sx%s' % (width, height))
     logging.debug('The output file: %s' % keywords.output)
 
-    do_convert(positional[0], int(width), int(height), keywords.unity, keywords.output)
+    do_convert(positional[0], int(width), int(height), keywords.unity, keywords.rotate, keywords.output)
 
 
 if __name__ == '__main__':

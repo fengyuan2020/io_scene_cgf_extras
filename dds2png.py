@@ -41,7 +41,7 @@ def run(args=None):
         for root, dirs, files in os.walk(directory):
             # ignore dirs, filtering .dds
             for f in files:
-                if f.endswith('.dds') and not f.startswith('_') and not f.startswith('.'):
+                if f.lower().endswith('.dds') and not f.startswith('_') and not f.startswith('.'):
                     input_lines.append(os.path.join(root, f))
     elif positional[0] == '-':
         # read from the stdin
